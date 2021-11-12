@@ -23,6 +23,7 @@ async function run(){
         console.log('connected to database')
         const database = client.db('helmatesBd');
         const productsCollection = database.collection('products');
+        const ordersCollection = database.collection('orders');
 
         // GET API 
         app.get('/products', async(req, res)=>{
@@ -42,14 +43,44 @@ async function run(){
 
             })
 
+            // GET API from All Orders
+            app.get('/allorders', async(req, res)=>{
+                const cursor = ordersCollection.find({});
+                const services= await cursor.toArray();
+                res.send(services);
+            })
+
         // POST API
         app.post('/products', async(req, res)=>{
             const product = req.body;
-            console.log('Hit the api', product)
+            // console.log('Hit the api', product)
             const result = await productsCollection.insertOne(product);
             console.log(result)
             res.json(result)
         });
+         // Add Order API
+         app.post('/orders', async(req, res)=>{
+            const order = req.body;
+            // console.log('order', order);
+            const result = await ordersCollection.insertOne(order);
+            res.json(result);
+        })
+
+        // Add Order POST API
+        app.post('/orders', async(req, res)=>{
+            const order = req.body;
+            // console.log('order', order);
+            const result = await orderCollection.insertOne(order);
+            res.json(result);
+        })
+
+         //DELETE API
+         app.delete('/products/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const result = await productsCollection.deleteOne(query);
+            res.json(result);
+        })
     }
     finally{
         // await client.close()
