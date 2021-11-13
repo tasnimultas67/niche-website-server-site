@@ -25,6 +25,7 @@ async function run(){
         const productsCollection = database.collection('products');
         const ordersCollection = database.collection('orders');
         const usersCollection = database.collection('users')
+        const reviewCollection = database.collection('reviews')
 
         // GET API 
         app.get('/products', async(req, res)=>{
@@ -71,6 +72,22 @@ async function run(){
                 res.json({admin:isAdmin});
             })
 
+            // GET API from All Orders
+            app.get('/allreviews', async(req, res)=>{
+                const cursor = reviewCollection.find({});
+                const review= await cursor.toArray();
+                res.send(review);
+            })
+
+            //GET API From single id
+            app.get('/manageOrders/:id', async(req, res)=>{
+                const id = req.params.id;
+                const query = {_id:ObjectId(id)};
+                const user = await ordersCollection.findOne(query);
+                // console.log('load user id', id);
+                res.send(user);
+            })
+
         // POST API
         app.post('/products', async(req, res)=>{
             const product = req.body;
@@ -102,6 +119,14 @@ async function run(){
             console.log(result)
             res.json(result)
         })
+        //REVIEW CARD POST API
+        app.post('/reviews', async(req, res)=>{
+            const review = req.body;
+            // console.log('Hit the api', review)
+            const result = await reviewCollection.insertOne(review);
+            console.log(result)
+            res.json(result)
+        });
 
         app.put('/users', async(req, res)=>{
             const user = req.body;
@@ -120,6 +145,22 @@ async function run(){
             const result = await usersCollection.updateOne(filter, updateDoc);
             res.json(result);
 
+        })
+
+        //PUT API
+        app.put('/manageorders/:id', async(req, res)=>{
+            const id = req.params.id;
+            const updatedUserOrder = req.body;
+            const filter = {_id:ObjectId(id)};
+            const options = {upsert: true};
+            const updateDoc = {
+                $set: {
+                    status: updatedUserOrder.status
+                },
+            };
+            const result = await ordersCollection.updateOne(filter,updateDoc, options)
+            // console.log("Updating user id",id);
+            res.json(result);
         })
  
          //DELETE API
