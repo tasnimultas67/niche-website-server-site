@@ -24,6 +24,7 @@ async function run(){
         const database = client.db('helmatesBd');
         const productsCollection = database.collection('products');
         const ordersCollection = database.collection('orders');
+        const usersCollection = database.collection('users')
 
         // GET API 
         app.get('/products', async(req, res)=>{
@@ -45,9 +46,29 @@ async function run(){
 
             // GET API from All Orders
             app.get('/allorders', async(req, res)=>{
+                const email = req.query.email;
+                const query = {email:email}
+                const cursor = ordersCollection.find(query);
+                const products= await cursor.toArray();
+                res.send(products);
+            })
+
+            // GET API from All Orders
+            app.get('/manageOrders', async(req, res)=>{
                 const cursor = ordersCollection.find({});
-                const services= await cursor.toArray();
-                res.send(services);
+                const products= await cursor.toArray();
+                res.send(products);
+            })
+
+            app.get('/users/:email', async(req, res)=>{
+                const email = req.params.email;
+                const query = {email:email};
+                const user = await usersCollection.findOne(query);
+                let isAdmin = false;
+                if(user?.role === 'admin'){
+                    isAdmin=true;
+                }
+                res.json({admin:isAdmin});
             })
 
         // POST API
@@ -74,11 +95,45 @@ async function run(){
             res.json(result);
         })
 
+        // Add USER POST API
+        app.post('/users', async(req, res) =>{
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            console.log(result)
+            res.json(result)
+        })
+
+        app.put('/users', async(req, res)=>{
+            const user = req.body;
+            const filter = {email:user.email};
+            const options = {upsert: true};
+            const updateDoc = {$set: user};
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result)
+        })
+
+        // Make Admin PUT API
+        app.put('/users/admin', async(req, res)=>{
+            const user = req.body;
+            const filter = {email:user.email};
+            const updateDoc = {$set: {role: 'admin'}};
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.json(result);
+
+        })
+ 
          //DELETE API
          app.delete('/products/:id', async(req, res)=>{
             const id = req.params.id;
             const query = {_id:ObjectId(id)};
             const result = await productsCollection.deleteOne(query);
+            res.json(result);
+        })
+        // DELETE API 2
+        app.delete('/ordered/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const result = await ordersCollection.deleteOne(query);
             res.json(result);
         })
     }
