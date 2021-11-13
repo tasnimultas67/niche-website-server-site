@@ -31,9 +31,7 @@ async function run(){
         app.get('/products', async(req, res)=>{
             const cursor = productsCollection.find({});
             const products= await cursor.toArray();
-            res.send({
-                products
-            });
+            res.send(products);
         })
          //GET Single product 
             app.get('/products/:id', async(req, res) => {
